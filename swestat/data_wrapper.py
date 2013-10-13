@@ -63,14 +63,18 @@ def pull_data(url):
    all the data """
    # get the metadata of the table 
    table_meta_data = get_url(url)
+   print table_meta_data
    # build a json query to pool all the data
    json_query = built_post_query(table_meta_data) 
+   print json_query
    # send a POST request 
    req = urllib2.Request(url, json_query)
    # get the response 
    response = urllib2.urlopen(req)
    data = response.read()
+   # returns dictionary
    return ast.literal_eval(data)    
+
 
 def write_data2file(outfile, data):
     outf = open(outfile, "w")
@@ -85,16 +89,17 @@ def isFloat(string):
         return False
 
 def plot_data(labels, content_data, out_file, ylabel):
-    time_data = [(int(labels[i]), float(content_data[i])) \
+    time_data = [(labels[i], float(content_data[i])) \
                   for i in range(0, len(content_data)) \
                   if isFloat(content_data[i])]
-    time_data.sort(key = lambda p: p[0])    
-    if len(time_data) < 7:
+    if len(time_data) < 3:
         print content_data
         return 
     plt.plot(range(0, len(time_data)), [d[1] for d in time_data], \
-                 "b-", linewidth = 2.0)
+                 "k-", linewidth = 3.0, marker = "o", markersize = 8)
     step = len(time_data) / 7
+    if step < 1:
+        step = 1
     plt.xticks(range(0, len(time_data), step), \
                    [str(time_data[j][0]) for j in range(0, len(time_data), step)])
     plt.ylabel(ylabel, fontsize = "20")
@@ -127,13 +132,15 @@ def plot_col_per_time(data, out_folder):
             d_columns.append((t, col["code"], col["text"]))    
             t += 1
         i += 1
-    print time_columns
-    print content_columns
+    #print time_columns
+    #print content_columns
  
     # set the value of all the other d and t columns as the first value 
     set_cols = []
+    #print data
     for tup in time_columns[1:] + d_columns:
-        v1 = data["data"][0]["key"][tup[0]]
+        v1 = data["data"][60]["key"][tup[0]]
+        print v1, tup
         set_cols.append((tup[0], tup[1], tup[2], v1))
 
     filtered_data = []
@@ -148,7 +155,7 @@ def plot_col_per_time(data, out_folder):
         if corr:
             filtered_data.append(d)
 
-    print filtered_data
+    #print filtered_data
     data  = filtered_data 
 
 
@@ -165,16 +172,11 @@ def plot_col_per_time(data, out_folder):
             plot_data(labels, content_data, outfile, content_columns[i][2])
             i += 1
 
-        
     
-
-    
-
-
 def main():
-    url = "http://api.scb.se/OV0104/v1/doris/en/ssd/BO/BO0201/BO0201A/KostnaderPerAreorFH2"
+    url = "http://api.scb.se/OV0104/v1/doris/en/ssd/LE/LE0102/LE0102L/InkStdMedianSKL"
+
     data = pull_data(url)
-    print type(data)
     for col in  data["columns"]:
         print col["text"], " ", col["type"] 
     print "-------------"
